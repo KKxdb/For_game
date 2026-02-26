@@ -6,11 +6,9 @@ import os
 
 app = Flask(__name__)
 
-# Вебхук береться з Environment Variable
 WEBHOOK = os.environ.get("WEBHOOK_URL")
 
 def check_roll(skill, roll, difficulty):
-    """Перевірка успіху за складністю"""
     if difficulty == "hard":
         target = skill // 2
     elif difficulty == "extreme":
@@ -20,9 +18,14 @@ def check_roll(skill, roll, difficulty):
     return roll <= target
 
 def send_to_discord(message):
-    """Асинхронна відправка повідомлення в Discord"""
+    if not WEBHOOK:
+        print("❌ WEBHOOK_URL not found in environment variables!")
+        return
+
     try:
-        requests.post(WEBHOOK, json={"content": message})
+        response = requests.post(WEBHOOK, json={"content": message})
+        print("Discord status:", response.status_code)
+        print("Discord response:", response.text)
     except Exception as e:
         print("Discord webhook error:", e)
 
@@ -32,13 +35,13 @@ def roll():
         skill = int(request.values.get("skill", 0))
     except ValueError:
         skill = 0
+
     difficulty = request.values.get("difficulty", "normal")
     skill_name = request.values.get("skill_name", "Навичка")
     character_name = request.values.get("character_name", "Персонаж")
 
     roll_value = random.randint(1, 100)
 
-    # критичний успіх та фумбл
     if roll_value == 1:
         result = "Критичний успіх 🎯"
     elif roll_value == 100:
@@ -55,12 +58,10 @@ def roll():
         f"Результат: {result}"
     )
 
-    # асинхронна відправка
     threading.Thread(target=send_to_discord, args=(message,)).start()
 
     return "OK"
 
-# Додатковий маршрут для пінгу / перевірки живого сервісу
 @app.route("/")
 def home():
     return "alive"
