@@ -58,7 +58,7 @@ def roll():
         f"Результат: {result}"
     )
 
-    threading.Thread(target=send_to_discord, args=(message,)).start()
+    send_to_discord(message)
 
     return "OK"
 
