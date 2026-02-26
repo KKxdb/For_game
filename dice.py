@@ -19,11 +19,21 @@ def check_roll(skill, roll, difficulty):
 
 def send_to_discord(message):
     if not WEBHOOK:
-        print("❌ WEBHOOK_URL not found in environment variables!")
+        print("❌ WEBHOOK_URL not found!")
         return
 
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+    }
+
     try:
-        response = requests.post(WEBHOOK, json={"content": message})
+        response = requests.post(
+            WEBHOOK,
+            json={"content": message},
+            headers=headers,
+            timeout=10
+        )
         print("Discord status:", response.status_code)
         print("Discord response:", response.text)
     except Exception as e:
