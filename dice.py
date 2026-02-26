@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-WEBHOOK = "https://discord.com/api/webhooks/1476522424840228926/4JUeYbfb2-ACPeaTz0RMTHnFLDCC0RRX4eSP0fPFPfDzEDi_Npqlu6eOR95NhofeX66C"
+WEBHOOK = os.environ.get("WEBHOOK_URL")
 
 def check_roll(skill, roll, difficulty):
     if difficulty == "hard":
