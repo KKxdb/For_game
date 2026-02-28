@@ -15,7 +15,7 @@ def check_roll(skill, roll, difficulty):
         target = skill // 5
     else:
         target = skill
-    return roll <= target
+    return roll >= target
 
 def send_to_discord(message):
     if not WEBHOOK:
@@ -50,15 +50,10 @@ def roll():
     skill_name = request.values.get("skill_name", "Навичка")
     character_name = request.values.get("character_name", "Персонаж")
 
-    roll_value = random.randint(1, 100)
+    roll_value = random.randint(1, 10)
 
-    if roll_value == 1:
-        result = "Критичний успіх 🎯"
-    elif roll_value == 100:
-        result = "Фумбл 💀"
-    else:
-        success = check_roll(skill, roll_value, difficulty)
-        result = "Успіх ✅" if success else "Провал ❌"
+    success = check_roll(skill, roll_value, difficulty)
+    result = "Успіх ✅" if success else "Провал ❌"
 
     message = (
         f"🎲 {skill_name} ({character_name})\n"
