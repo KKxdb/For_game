@@ -71,6 +71,31 @@ def roll():
 def home():
     return "alive"
 
+@app.route("/upload-photo", methods=["POST"])
+def upload_photo():
+    try:
+        data = request.get_data()
+
+        if not data:
+            return "No data received", 400
+
+        if len(data) > 10 * 1024 * 1024:
+            return "File too large", 413
+
+        # Временно сохраняем полученные данные
+        with open("/tmp/last_image_field.fdf", "wb") as f:
+            f.write(data)
+
+        print("Received content type:", request.content_type)
+        print("Received data size:", len(data))
+        print("Received header:", data[:30])
+
+        return "FDF received successfully", 200
+
+    except Exception as e:
+        print("Upload error:", e)
+        return "Upload error", 500
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
