@@ -3,6 +3,9 @@ import random
 import requests
 import threading
 import os
+from PIL import Image
+import io
+import re
 
 app = Flask(__name__)
 
@@ -95,6 +98,83 @@ def upload_photo():
     except Exception as e:
         print("Upload error:", e)
         return "Upload error", 500
+
+
+@app.route("/upload-image", methods=["POST"])
+def upload_image():
+    try:
+        data = request.get_json()
+
+        if not data:
+            return "No JSON received", 400
+
+        width = int(data["width"])
+        height = int(data["height"])
+        hex_data = data["image"]
+
+        if width <= 0 or height <= 0:
+            return "Invalid dimensions", 400
+
+        if width * height > 4000000:
+            return "Image too large", 413
+
+        expected_length = width * height * 8
+
+        if len(hex_data) != expected_length:
+            return "Invalid HEX length", 400
+
+        if not re.fullmatch(r"[0-9a-fA-F]+", hex_data):
+            return "Invalid HEX data", 400
+
+        # HEX -> bytes
+        argb = bytes.fromhex(hex_data)
+
+        # ARGB -> RGBA
+        rgba = bytearray(len(argb))
+
+        for i in range(0, len(argb), 4):
+            a, r, g, b = argb[i:i+4]
+            rgba[i:i+4] = bytes([r, g, b, a])
+
+        # Создаём PNG
+        image = Image.frombytes(
+            "RGBA",
+            (width, height),
+            bytes(rgba)
+        )
+
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        if not WEBHOOK:
+            return "WEBHOOK_URL not found", 500
+
+        # Отправляем фотографию в Discord
+        response = requests.post(
+            WEBHOOK,
+            data={"content": "📷 Фото из PDF"},
+            files={
+                "file": ("hero.png", buffer, "image/png")
+            },
+            timeout=30
+        )
+
+        print("Discord image status:", response.status_code)
+        print("Discord response:", response.text)
+
+        if response.status_code not in (200, 204):
+            return "Discord upload failed", 502
+
+        return {
+            "status": "success",
+            "message": "Image sent to Discord"
+        }, 200
+
+    except Exception as e:
+        print("Image upload error:", e)
+        return str(e), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
