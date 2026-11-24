@@ -111,6 +111,7 @@ def upload_image():
         width = int(data["width"])
         height = int(data["height"])
         hex_data = data["image"]
+        character_name = data.get("character_name", "Без имени")
 
         if width <= 0 or height <= 0:
             return "Invalid dimensions", 400
@@ -151,9 +152,12 @@ def upload_image():
             return "WEBHOOK_URL not found", 500
 
         # Отправляем фотографию в Discord
+        
         response = requests.post(
             WEBHOOK,
-            data={"content": "📷 Фото из PDF"},
+            data={
+                "content": f"Как выглядит {character_name}"
+            },
             files={
                 "file": ("hero.png", buffer, "image/png")
             },
